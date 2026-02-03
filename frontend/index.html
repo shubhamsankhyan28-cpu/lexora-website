@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexora AI</title>
+    <link rel="icon" href="./assets/logo.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <canvas id="stars"></canvas>
+
+    <header class="topbar">
+        <button id="menuBtn" class="menu-btn">☰</button>
+        <div class="brand">
+            <img src="./assets/logo.png" class="logo-img" alt="lexora AI Logo">
+            <span class="brand-name">Lexora AI</span>
+        </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+        <nav>
+            <a class="nav-link" data-page="subscription">Subscription</a>
+            <a class="nav-link active" data-page="dashboard">Dashboard</a>
+            <a class="nav-link" data-page="summaries">Summaries</a>
+            <a class="nav-link" data-page="notes">Notes</a>
+            <a class="nav-link" data-page="quiz">Quiz</a>
+            <a class="nav-link" data-page="settings">Settings</a>
+        </nav>
+    </aside>
+
+    <div id="overlay"></div>
+
+    <main class="main">
+        <section id="subscription" class="page">
+            <div class="header-box" style="text-align: center; margin-bottom: 30px;">
+                <h2>Choose Your Plan 🚀</h2>
+                <p style="font-weight: 500; opacity: 0.9;">Unlock more videos and AI power.</p>
+            </div>
+
+            <div class="pricing-container">
+                <div class="pricing-card" data-plan="Free Starter">
+                    <h3>Free Starter</h3>
+                    <div class="price">₹0<span>/mo</span></div>
+                    <ul class="features">
+                        <li>✓ 3 videos per day</li>
+                        <li>✓ Short AI summaries</li>
+                        <li>✕ 0 CC Credits</li>
+                        <li>✓ Short notes</li>
+                        <li>✓ Easy-level quiz (3 Qs)</li>
+                    </ul>
+                    <button class="btn-primary upgrade-btn" data-plan="Free Starter"
+                        style="background: rgba(255,255,255,0.1);">Switch
+                        to Free Starter</button>
+                </div>
+
+                <div class="pricing-card" data-plan="Student Plus">
+                    <h3>Student Plus</h3>
+                    <div class="price">₹199<span>/mo</span></div>
+                    <ul class="features">
+                        <li>✓ 6 videos/day</li>
+                        <li>✓ Smart AI summaries</li>
+                        <li>✕ 0 CC Credits</li>
+                        <li>✓ Medium notes</li>
+                        <li>✓ Adaptive quizzes (Easy–Medium)</li>
+                    </ul>
+                    <button class="btn-primary upgrade-btn" data-plan="Student Plus">Upgrade</button>
+                </div>
+
+                <div class="pricing-card popular" data-plan="Pro Learner">
+                    <div class="badge">⭐ Most Popular</div>
+                    <h3>Pro Learner</h3>
+                    <div class="price">₹499<span>/mo</span></div>
+                    <ul class="features">
+                        <li>✓ 10 videos/day</li>
+                        <li>✓ Detailed summaries</li>
+                        <li>✓ <b>3 CC Credits</b>/day</li>
+                        <li>✓ Advanced notes</li>
+                        <li>✓ <b>Exam-Style Quiz</b> (8 Qs)</li>
+                        <li>✓ PDF export</li>
+                    </ul>
+                    <button class="btn-primary upgrade-btn" data-plan="Pro Learner">Upgrade</button>
+                </div>
+
+                <div class="pricing-card premium" data-plan="power User">
+                    <h3>Power User</h3>
+                    <div class="price">₹999<span>/mo</span></div>
+                    <ul class="features">
+                        <li>✓ 15 videos/day</li>
+                        <li>✓ Maximum AI quality</li>
+                        <li>✓ Advanced notes</li>
+                        <li>✓ <b>6 CC Credits</b>/day</li>
+                        <li>✓ <b>Full Mastery Quiz</b> (15 Qs)</li>
+                        <li>✓ PDF export</li>
+                        <li>✓ Priority processing</li>
+                    </ul>
+                    <button class="btn-primary power-btn upgrade-btn" data-plan="power User">🔥 Upgrade</button>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 50px; text-align:center; color:#ffda79; font-weight: 800;">🔥 Exam Season Specials
+            </h2>
+            <p style="text-align:center; opacity:1; font-weight: 600; margin-bottom:30px;">Best value for exam
+                preparation.
+                One-time payment.</p>
+
+            <div class="pricing-container" style="justify-content: center;">
+                <div class="pricing-card" data-plan="weekly"
+                    style="border: 2px solid #ffd700; background: rgba(20, 16, 41, 0.9);">
+                    <h3>Weekly Pass</h3>
+                    <div class="price" style="color:#ffd700">₹99<span>/week</span></div>
+                    <ul class="features">
+                        <li>✓ <b>8 videos</b> per day</li>
+                        <li>✓ <b>2 CC Credits</b>/day</li>
+                        <li>✓ Perfect for Exam Week</li>
+                        <li>✓ PDF Export Included</li>
+                    </ul>
+                    <button class="btn-primary upgrade-btn" data-plan="weekly"
+                        style="background:#ffd700; color:#000; font-weight:800;">Get Weekly</button>
+                </div>
+
+                <div class="pricing-card" data-plan="pro_quarter"
+                    style="border: 2px solid #a29bfe; background: rgba(20, 16, 41, 0.9);">
+                    <h3>Exam Pass</h3>
+                    <div class="price">₹1599<span>/3 mo</span></div>
+                    <div class="badge"
+                        style="background:#a29bfe; color:#0f0a1e; position:static; display:inline-block; margin-bottom:10px; transform:none;">
+                        SEMESTER DEAL</div>
+                    <ul class="features">
+                        <li>✓ <b>Includes all Pro Features</b></li>
+                        <li>✓ Valid for <b>90 Days</b></li>
+                        <li>✓ <b>Bonus:</b> 15 Videos/day</li>
+                        <li>✓ <b>Bonus:</b> 5 CC Credits/day</li>
+                    </ul>
+                    <button class="btn-primary upgrade-btn" data-plan="pro_quarter">Get Pass</button>
+                </div>
+
+                <div class="pricing-card" data-plan="power_quarter"
+                    style="border: 2px solid #ff7675; background: rgba(20, 16, 41, 0.9);">
+                    <h3>Power Pass</h3>
+                    <div class="price">₹2999<span>/3 mo</span></div>
+                    <div class="badge"
+                        style="background:#ff7675; color:#fff; position:static; display:inline-block; margin-bottom:10px; transform:none;">
+                        VIP ACCESS</div>
+                    <ul class="features">
+                        <li>✓ <b>Includes all Power Features</b></li>
+                        <li>✓ Valid for <b>90 Days</b></li>
+                        <li>✓ <b>Bonus:</b> 20 Videos/day</li>
+                        <li>✓ <b>Bonus:</b> 10 CC Credits/day</li>
+                    </ul>
+                    <button class="btn-primary power-btn upgrade-btn" data-plan="power_quarter">Get VIP</button>
+                </div>
+            </div>
+        </section>
+        <section id="dashboard" class="page active">
+
+            <!-- MAIN CARD -->
+            <div class="card" style="text-align: center; padding: 30px 20px;">
+
+                <h1>Lexora AI</h1>
+                <p class="subtitle" style="opacity: 0.7; margin-bottom: 25px;">
+                    Turn videos into summaries, notes & quizzes
+                </p>
+
+                <!-- STREAK (TOP – BEAUTIFUL) -->
+                <div class="streak-box" style="margin: 0 auto 25px auto; padding: 10px 20px;
+              background: rgba(255, 255, 255, 0.08);
+              border-radius: 20px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              width: fit-content;
+              display: flex;
+              align-items: center;
+              gap: 8px;">
+                    <span style="font-size: 18px;">🔥</span>
+                    <span>
+                        Study Streak:
+                        <strong id="streakText" style="color: #ff9f43;">0</strong> Days
+                    </span>
+                </div>
+
+                <!-- INPUT + ANALYZE -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <input id="videoInput" class="input" placeholder="Paste YouTube link here..." style="padding: 15px; border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.2);
+                background: #0b061a; color: white;">
+
+                    <button id="analyzeBtn" class="btn-primary" onclick="window.analyzeVideo()" style="padding: 15px; font-weight: bold;
+                border-radius: 12px; cursor: pointer;">
+                        ✨ Analyze Video
+                    </button>
+                </div>
+
+                <!-- OUTPUT -->
+                <div class="output" id="outputBox" style="margin-top: 20px; font-size: 14px; opacity: 0.6;">
+                    Paste a link above to start learning.
+                </div>
+
+                <!-- CC DOWNLOAD (LOGIC-CONTROLLED) -->
+                <button id="generateCcBtn" class="premium-btn" style="display:none; margin-top: 20px; width:100%;
+              justify-content:center; flex-direction:column; gap:2px;">
+                    <span>🎧 Download Full Transcript</span>
+                    <small style="font-size: 10px; opacity: 0.8; font-weight:normal;">
+                        (Get the exact words • Premium)
+                    </small>
+                </button>
+
+                <div id="ccInfo" class="cc-info" style="margin-top: 5px; font-size: 12px; opacity: 0.7;">
+                </div>
+
+                <!-- PDF EXPORT (SAFE) -->
+                <button class="premium-btn" style="margin-top: 15px;"
+                    onclick="window.exportPDF?.() || showToast('🔒 Pro feature', 'error')">
+                    <span class="premium-icon">📄</span>
+                    <span class="premium-text">Export PDF</span>
+                    <span class="premium-badge">PRO</span>
+                </button>
+
+            </div>
+
+            <!-- RECENT SECTION -->
+            <div class="recent-section" style="margin-top: 40px;">
+                <h3 style="margin-bottom: 15px; padding-left: 5px; border-left: 3px solid #6c5ce7;">
+                    Your Recent Sessions
+                </h3>
+
+                <!-- Uses existing history logic -->
+                <div id="dashboardHistory" style="display: grid; gap: 15px;"></div>
+            </div>
+
+            <!-- 7 DAY REWARD -->
+            <div class="streak-reward">
+                <p class="streak-title">🎁 7-Day Study Reward</p>
+
+                <div class="streak-bar">
+                    <div class="streak-progress" id="streakProgress"></div>
+                </div>
+
+                <p class="streak-info" id="streakInfo">
+                    Study 7 days in a row to unlock a free Student plan for 1 day
+                </p>
+
+                <p class="streak-label" id="streakLabel">Day 0 of 7 completed</p>
+
+                <button class="btn-lock" id="redeemBtn" disabled>
+                    Reward Locked 🔒
+                </button>
+            </div>
+
+        </section>
+
+        <section id="summaries" class="page">
+
+            <h2 class="page-title">Latest Result</h2>
+            <div id="latestSummary" class="summary-box">
+                <p class="empty">Analyze a video to see the summary.</p>
+            </div>
+
+            <h2 class="page-title" style="margin-top: 25px;">📂 Past Sessions</h2>
+            <div id="historyList" class="history-container">
+            </div>
+
+        </section>
+
+        <section id="notes" class="page">
+            <div class="card">
+                <h2>Notes</h2>
+
+                <textarea class="input" id="notesTextarea" rows="7"
+                    placeholder="Write or edit your notes here..."></textarea>
+
+                <button class="btn-primary" id="saveNotesBtn">
+                    💾 Save Notes
+                </button>
+
+                <button class="btn-secondary" id="refreshNotesBtn" style="margin-left: 5px;">
+                    🔄 Refresh
+                </button>
+
+                <button id="advancedNotesBtn" class="premium-btn locked" style="margin-top:10px;">
+                    ✨ Generate Advanced Notes
+                    <span class="premium-badge">PRO</span>
+                </button>
+
+                <div id="notesList" style="margin-top:15px;"></div>
+            </div>
+        </section>
+
+        <section id="quiz" class="page">
+            <div class="card">
+                <h2>Quiz</h2>
+                <p class="subtitle">AI-generated quiz based on the video</p>
+
+                <div class="quiz-box">
+                    <p id="quizQuestion">No quiz generated yet.</p>
+
+                    <div id="quizOptions" class="quiz-options"></div>
+
+                    <button id="nextQuizBtn" class="btn-primary" style="display:none;">
+                        Next Question
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="settings" class="page">
+            <div class="settings-group">
+                <h3>Account</h3>
+
+                <div class="card" style="padding: 20px;">
+
+                    <div id="loginBox">
+                        <p class="status-text">Status: Guest</p>
+                        <button class="btn-google" onclick="window.loginWithGoogle()">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="">
+                            Continue with Google
+                        </button>
+                    </div>
+
+                    <div id="userBox" class="user-dropdown-container" style="display:none;">
+                        <div class="user-header" onclick="window.toggleUserDropdown()">
+                            <img id="userAvatar" src="" alt="User" class="avatar">
+                            <div class="user-info-text">
+                                <h3 id="userName">User</h3>
+                                <p id="userPlanBadge" class="plan-badge">FREE PLAN</p>
+                            </div>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+
+                        <div id="userDropdownMenu" class="dropdown-menu">
+                            <div class="menu-item disabled">
+                                <span id="userEmail">email@example.com</span>
+                            </div>
+                            <div class="menu-divider"></div>
+                            <div class="menu-item"
+                                onclick="document.querySelector('[data-page=\'subscription\']').click()">
+                                <span>🚀</span> Upgrade Plan
+                            </div>
+                            <div class="menu-item delete" onclick="window.logoutUser()">
+                                <span>🚪</span> Logout
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Apply Promo Codes</h3>
+                        <input class="input" id="promoInput" placeholder="Enter code here...">
+                        <button class="btn-primary" id="applyPromoBtn" style="margin-top:10px;">Apply Code</button>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>AI Preferences</h3>
+                        <label>Language</label>
+                        <select class="input">
+                            <option>English</option>
+                            <option>Hindi</option>
+                            <option>Spanish</option>
+                            <option>French</option>
+                            <option>German</option>
+                            <option>Korean</option>
+                            <option>Japanese</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <h3>AI Preferences</h3>
+                        <label style="display:block; margin-bottom:8px;">Quiz Difficulty</label>
+                        <select id="quizDifficulty" class="input">
+                            <option value="easy">Easy (Normal)</option>
+                            <option value="medium" disabled>Medium (Locked) 🔒</option>
+                            <option value="hard" disabled>Hard (Locked) 🔒</option>
+                        </select>
+                        <p style="font-size: 12px; opacity: 0.6; margin-top: 5px;">Upgrade plan to unlock Medium & Hard
+                            modes.
+                        </p>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Background Effect</h3>
+                        <select class="input" id="bgEffect" disabled>
+                            <option>Snowfall</option>
+                            <option>Stars (Coming Soon)</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <h3>Support</h3>
+                        <p style="opacity: 0.7;">Email: HQNexora@gmail.com</p>
+                    </div>
+        </section>
+
+    </main>
+</body>
+
+<div id="toastBox" class="custom-toast" style="display:none;">
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Firebase / App Logic -->
+<script type="module" src="./script.js"></script>
+
+<div id="toast" class="toast"></div>
+<div id="promoOverlay" class="promo-overlay"></div>
+<div id="promoPopup" class="promo-popup">
+    <button id="closePromo" class="close-promo">×</button>
+
+    <div class="promo-icon">🎉</div>
+    <h3>Exam Season Special</h3>
+    <p class="promo-sub">Don't let exams stress you out.</p>
+
+    <div class="promo-deal">
+        <div class="deal-left">
+            <span class="deal-tag">SEMESTER PASS</span>
+            <span class="deal-price">₹1599 <small>/ 3 Months</small></span>
+        </div>
+        <div class="deal-right">
+            <span>🚀 15 Videos/Day</span>
+            <span>🎧 5 CC Credits</span>
+        </div>
+    </div>
+
+    <button id="claimPromoBtn" class="btn-primary promo-btn">
+        Claim Exam Pass
+    </button>
+    <p class="promo-tiny">Limited time offer for students.</p>
+</div>
+
+</html>
