@@ -235,7 +235,8 @@ window.loginWithGoogle = async () => {
         const result = await signInWithPopup(auth, provider);
         const user = {
             name: result.user.displayName,
-            email: result.user.email
+            email: result.user.email,
+            photo: result.user.photoURL
         };
         localStorage.setItem("lexora_user", JSON.stringify(user));
         updateLoginUI();
@@ -1013,19 +1014,33 @@ function updateLoginUI() {
     const user = getUser();
     const loginBox = document.getElementById("loginBox");
     const userBox = document.getElementById("userBox");
+
     if (!loginBox || !userBox) return;
 
     if (user) {
         loginBox.style.display = "none";
         userBox.style.display = "block";
-        document.getElementById("userName").innerText = user.name;
-        document.getElementById("userEmail").innerText = user.email;
+
+        document.getElementById("userName").innerText = user.name || "User";
+        document.getElementById("userEmail").innerText = user.email || "";
+
+        // ✅ Avatar fallback
+        const avatar = document.getElementById("userAvatar");
+        if (avatar) {
+            avatar.src = user.photo || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name || "User");
+        }
+
+        // ✅ Plan badge
+        const badge = document.getElementById("userPlanBadge");
+        if (badge) {
+            badge.innerText = (PLAN_LIMITS[getPlan()]?.name || "Free").toUpperCase() + " PLAN";
+        }
+
     } else {
         loginBox.style.display = "block";
         userBox.style.display = "none";
     }
 }
-
 document.getElementById("applyPromoBtn")?.addEventListener("click", () => {
     const code = document.getElementById("promoInput").value.trim().toUpperCase();
 
