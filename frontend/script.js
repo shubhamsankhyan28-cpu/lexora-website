@@ -79,22 +79,27 @@ function renderCurrentQuestion() {
     }
 }
 
-async function fetchWithRetry(url, options, retries = 2) {
+async function fetchWithRetry(url, options, retries = 2, delay = 3000) {
     try {
         const res = await fetch(url, options);
-        if (!res.ok && retries > 0) {
-            await new Promise(r => setTimeout(r, 1500));
-            return fetchWithRetry(url, options, retries - 1);
+
+        // If rate-limited, wait longer
+        if (res.status === 429 && retries > 0) {
+            await new Promise(r => setTimeout(r, delay));
+            return fetchWithRetry(url, options, retries - 1, delay * 2);
         }
+
+        if (!res.ok) return null;
         return res;
     } catch (err) {
         if (retries > 0) {
-            await new Promise(r => setTimeout(r, 1500));
-            return fetchWithRetry(url, options, retries - 1);
+            await new Promise(r => setTimeout(r, delay));
+            return fetchWithRetry(url, options, retries - 1, delay * 2);
         }
-        throw err;
+        return null;
     }
 }
+
 // ================= QUIZ GLOBAL CLICK HANDLER (FIXED) =================
 document.addEventListener("click", (e) => {
     if (!window.currentQuizData) return;
@@ -895,7 +900,7 @@ if (analyzeBtn) {
 
             renderCurrentQuestion(); // ✅ CALL AFTER SETTING QUIZ DATA
 
-            currentTranscript = data.summary || "";
+            currentTranscript = data.transcript || "";
             localStorage.setItem(
                 "videos_used_today",
                 videosUsed + 1
@@ -1226,7 +1231,7 @@ if (lastDate !== today) {
 }
 // 6. Check Backend Status
 fetch(`${BACKEND_BASE}/health`).catch(() => { });
-showToast("⚡ Waking up AI engine… first request may take ~30 seconds", "info");
+analyzeBtn.innerText = "⏳ AI is warming up…";
 window.openCompareModal = () => {
     const overlay = document.getElementById('compareOverlay');
     const modal = document.getElementById('compareModal');
