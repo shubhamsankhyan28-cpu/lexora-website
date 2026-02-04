@@ -28,7 +28,7 @@ const DISPLAY_TO_KEY = {
 };
 
 // 2️⃣ Backend URL (single source of truth)
-const BACKEND_BASE = "https://lexora-backend-1.onrender.com";
+const BACKEND_BASE = "https://lexora-backend-2.onrender.com";
 const BACKEND_ANALYZE = `${BACKEND_BASE}/analyze`;
 // 4️⃣ Fix inline HTML button onclick
 window.analyzeVideo = () => {
@@ -79,6 +79,22 @@ function renderCurrentQuestion() {
     }
 }
 
+async function fetchWithRetry(url, options, retries = 2) {
+    try {
+        const res = await fetch(url, options);
+        if (!res.ok && retries > 0) {
+            await new Promise(r => setTimeout(r, 1500));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+        return res;
+    } catch (err) {
+        if (retries > 0) {
+            await new Promise(r => setTimeout(r, 1500));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+        throw err;
+    }
+}
 // ================= QUIZ GLOBAL CLICK HANDLER (FIXED) =================
 document.addEventListener("click", (e) => {
     if (!window.currentQuizData) return;
@@ -823,7 +839,7 @@ async function fetchAISummary(videoUrl) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
     try {
-        const res = await fetch(BACKEND_ANALYZE, {
+        const res = await fetchWithRetry(BACKEND_ANALYZE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -863,7 +879,7 @@ if (analyzeBtn) {
         }
 
         analyzeBtn.disabled = true;
-        analyzeBtn.innerText = "Analyzing…";
+        analyzeBtn.innerText = "Starting AI engine…";
         analyzeBtn.classList.add("loading");
 
         try {
@@ -878,8 +894,7 @@ if (analyzeBtn) {
 
             renderCurrentQuestion(); // ✅ CALL AFTER SETTING QUIZ DATA
 
-            currentTranscript = data.transcript || "";
-
+            currentTranscript = data.summary || "";
             localStorage.setItem(
                 "videos_used_today",
                 videosUsed + 1
@@ -1195,9 +1210,7 @@ if (lastDate !== today) {
     localStorage.setItem("videos_used_today", 0); // ✅ Reset Video Limit
 }
 // 6. Check Backend Status
-fetch(BACKEND_BASE)
-    .then(res => { if (!res.ok) throw new Error(); })
-    .catch(() => { });
+fetch(`${BACKEND_BASE}/health`).catch(() => { });
 showToast("⚡ Waking up AI engine… first request may take ~30 seconds", "info");
 window.openCompareModal = () => {
     const overlay = document.getElementById('compareOverlay');
