@@ -882,10 +882,23 @@ if (analyzeBtn) {
 
         try {
             const data = await fetchAISummary(url);
-            if (!data || !data.summary) {
-                showToast("⚠️ AI is warming up. Please retry in a moment.", "error");
+            console.log("📦 RAW ANALYZE RESPONSE:", data);
+            if (!data || !data.transcript) {
+                showToast(
+                    "❌ This video has no captions available. Try another video.",
+                    "error"
+                );
                 return;
             }
+
+            if (data.summary.includes("No captions")) {
+                showToast(
+                    "❌ No captions found for this video. AI cannot analyze it.",
+                    "error"
+                );
+                return;
+            }
+
             window.currentQuizData = {
                 quizData: data.quiz || [],
                 quizIndex: 0,
