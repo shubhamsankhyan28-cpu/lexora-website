@@ -79,22 +79,16 @@ function renderCurrentQuestion() {
     }
 }
 
-async function fetchWithRetry(url, options, retries = 3, delay = 1500) {
-    try {
-        const res = await fetch(url, options);
+async function fetchWithRetry(url, options) {
+    const res = await fetch(url, options);
 
-        if (res.status === 429) {
-            showToast("⏳ Too many requests. Please wait 1 minute.", "error");
-            return null;
-        }
-        return res;
-    } catch (err) {
-        if (retries > 0) {
-            await new Promise(r => setTimeout(r, delay));
-            return fetchWithRetry(url, options, retries - 1, delay * 2);
-        }
-        throw err;
+    if (res.status === 429) {
+        const retry = res.headers.get("Retry-After") || 60;
+        showToast(`⏳ Too many requests. Try again in ${retry}s`, "error");
+        return null;
     }
+
+    return res;
 }
 
 // ================= QUIZ GLOBAL CLICK HANDLER (FIXED) =================
@@ -836,7 +830,7 @@ window.loadHistory = function (index) {
 /* ==========================================================================
    VIDEO ANALYSIS FLOW
    ========================================================================== */
-const analyzeBtn = document.getElementById("analyzeBtn");
+
 const videoInput = document.getElementById("videoInput");
 async function fetchAISummary(videoUrl) {
     const controller = new AbortController();
@@ -885,7 +879,6 @@ if (analyzeBtn) {
 
         analyzeBtn.disabled = true;
         analyzeBtn.innerText = "Starting AI engine…";
-        analyzeBtn.classList.add("loading");
 
         try {
             const data = await fetchAISummary(url);
@@ -910,14 +903,18 @@ if (analyzeBtn) {
             renderSummary(data.summary);
             renderNotesFromAPI(data.notes, data.quiz);
             applyStreakAfterStudy();
-
+            saveToHistory({
+                date: new Date().toLocaleString(),
+                summary: data.summary,
+                notes: data.notes,
+                quiz: data.quiz
+            });
         } catch (err) {
             showToast("❌ Analysis failed. Try again.", "error");
         } finally {
             analyzeBtn.dataset.running = "false"; // 🔓 release lock
             analyzeBtn.disabled = false;
             analyzeBtn.innerText = "Analyze Video";
-            analyzeBtn.classList.remove("loading");
         }
 
     });
@@ -1233,7 +1230,9 @@ if (lastDate !== today) {
     localStorage.setItem("videos_used_today", 0); // ✅ Reset Video Limit
 }
 // 6. Check Backend Status
-fetch(`${BACKEND_BASE}/health`).catch(() => { });
+fetch(`${BACKEND_BASE}/health`)
+    .then(() => console.log("✅ Backend awake"))
+    .catch(() => showToast("⚠️ AI waking up (~30 seconds)", "info"));
 window.openCompareModal = () => {
     const overlay = document.getElementById('compareOverlay');
     const modal = document.getElementById('compareModal');
