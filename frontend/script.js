@@ -79,24 +79,21 @@ function renderCurrentQuestion() {
     }
 }
 
-async function fetchWithRetry(url, options, retries = 2, delay = 3000) {
+async function fetchWithRetry(url, options, retries = 3, delay = 1500) {
     try {
         const res = await fetch(url, options);
 
-        // If rate-limited, wait longer
-        if (res.status === 429 && retries > 0) {
-            await new Promise(r => setTimeout(r, delay));
-            return fetchWithRetry(url, options, retries - 1, delay * 2);
+        if (res.status === 429) {
+            showToast("⏳ Too many requests. Please wait 1 minute.", "error");
+            return null;
         }
-
-        if (!res.ok) return null;
         return res;
     } catch (err) {
         if (retries > 0) {
             await new Promise(r => setTimeout(r, delay));
             return fetchWithRetry(url, options, retries - 1, delay * 2);
         }
-        return null;
+        throw err;
     }
 }
 
@@ -866,7 +863,9 @@ if (analyzeBtn) {
     analyzeBtn.addEventListener("click", async () => {
         track("analyze_click", { plan: getPlan() });
         if (!videoInput) return;
-
+        // 🔒 HARD LOCK — prevent double requests
+        if (analyzeBtn.dataset.running === "true") return;
+        analyzeBtn.dataset.running = "true";
         // 🛑 CHECK DAILY VIDEO LIMITS
         const plan = getPlan();
         const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
@@ -890,8 +889,10 @@ if (analyzeBtn) {
 
         try {
             const data = await fetchAISummary(url);
-            if (!data || !data.summary) throw new Error();
-
+            if (!data || !data.summary) {
+                showToast("⚠️ AI is warming up. Please retry in a moment.", "error");
+                return;
+            }
             window.currentQuizData = {
                 quizData: data.quiz || [],
                 quizIndex: 0,
@@ -913,10 +914,12 @@ if (analyzeBtn) {
         } catch (err) {
             showToast("❌ Analysis failed. Try again.", "error");
         } finally {
+            analyzeBtn.dataset.running = "false"; // 🔓 release lock
             analyzeBtn.disabled = false;
             analyzeBtn.innerText = "Analyze Video";
             analyzeBtn.classList.remove("loading");
         }
+
     });
 }
 // 4. Show the CC Button (Un-hide it)
@@ -1231,7 +1234,6 @@ if (lastDate !== today) {
 }
 // 6. Check Backend Status
 fetch(`${BACKEND_BASE}/health`).catch(() => { });
-analyzeBtn.innerText = "⏳ AI is warming up…";
 window.openCompareModal = () => {
     const overlay = document.getElementById('compareOverlay');
     const modal = document.getElementById('compareModal');
