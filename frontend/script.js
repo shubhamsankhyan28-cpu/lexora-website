@@ -879,26 +879,19 @@ if (analyzeBtn) {
 
         analyzeBtn.disabled = true;
         analyzeBtn.innerText = "Starting AI engine…";
-
+        analyzeBtn.classList.add("loading");
         try {
             const data = await fetchAISummary(url);
-            console.log("📦 RAW ANALYZE RESPONSE:", data);
-            if (!data || !data.transcript) {
-                showToast(
-                    "❌ This video has no captions available. Try another video.",
-                    "error"
-                );
+            console.log("RAW_ANALYZE_RESPONSE", data);
+            if (!data) {
+                showToast("❌ No response from AI server.", "error");
                 return;
             }
 
-            if (data.summary.includes("No captions")) {
-                showToast(
-                    "❌ No captions found for this video. AI cannot analyze it.",
-                    "error"
-                );
+            if (!data.summary || !data.notes || !data.quiz) {
+                showToast("⚠️ AI response incomplete. Try again.", "error");
                 return;
             }
-
             window.currentQuizData = {
                 quizData: data.quiz || [],
                 quizIndex: 0,
@@ -915,6 +908,7 @@ if (analyzeBtn) {
 
             renderSummary(data.summary);
             renderNotesFromAPI(data.notes, data.quiz);
+            currentTranscript = data.transcript || "";
             applyStreakAfterStudy();
             saveToHistory({
                 date: new Date().toLocaleString(),
@@ -928,6 +922,7 @@ if (analyzeBtn) {
             analyzeBtn.dataset.running = "false"; // 🔓 release lock
             analyzeBtn.disabled = false;
             analyzeBtn.innerText = "Analyze Video";
+            analyzeBtn.classList.remove("loading");
         }
 
     });
