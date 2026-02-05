@@ -579,8 +579,8 @@ function updateCCUI() {
             }
 
             // 3. Check Data
-            if (!currentTranscript) {
-                showToast("⚠️ Please analyze a video first!", "error");
+            if (!currentTranscript || currentTranscript.length < 50) {
+                showToast("⚠️ Transcript not available for this video.", "error");
                 return;
             }
 
