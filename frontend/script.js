@@ -81,13 +81,11 @@ function renderCurrentQuestion() {
 
 async function fetchWithRetry(url, options) {
     const res = await fetch(url, options);
-
-    if (res.status === 429) {
-        const retry = res.headers.get("Retry-After") || 60;
-        showToast(`⏳ Too many requests. Try again in ${retry}s`, "error");
-        return null;
+    if (res.status === 503) {
+        showToast("🤖 AI waking up… retrying", "info");
+        await new Promise(r => setTimeout(r, 4000));
+        return fetch(url, options);
     }
-
     return res;
 }
 
@@ -204,6 +202,10 @@ const PLAN_LIMITS = {
         name: "Power Pass"
     }
 };
+// ✅ ADD SECURITY LOCK HERE (Prevents console hacking)
+Object.freeze(PLAN_LIMITS);
+Object.freeze(DEV_CODES);
+Object.freeze(PROMO_CODES); // Optional: Good idea to freeze this too
 /* ================= FIREBASE AUTH ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -583,6 +585,10 @@ function updateCCUI() {
                 showToast("⚠️ Transcript not available for this video.", "error");
                 return;
             }
+            // 🧠 Ensure summary tab also shows content
+            if (window.lastSummary) {
+                renderSummary(window.lastSummary);
+            }
 
             // 4. Download Logic (Directly here!)
             const btn = e.target.closest("#generateCcBtn");
@@ -827,39 +833,25 @@ window.loadHistory = function (index) {
     showToast("📂 Loaded saved session", "success");
 };
 
-/* ==========================================================================
-   VIDEO ANALYSIS FLOW
-   ========================================================================== */
+/* ================= VIDEO ANALYSIS FLOW (FIXED) ================= */
 
-const videoInput = document.getElementById("videoInput");
-async function fetchAISummary(videoUrl) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 45000);
-    try {
-        const res = await fetchWithRetry(BACKEND_ANALYZE, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                url: videoUrl,
-                plan: getPlan()
-            }),
-            signal: controller.signal
-        });
-        clearTimeout(timeout);
-        if (!res.ok) return null;
-        return await res.json();
-    } catch (err) {
-        clearTimeout(timeout);
-        return null;
-    }
-}
 if (analyzeBtn) {
     analyzeBtn.addEventListener("click", async () => {
+
+        // ✅ 1. SPAM PROTECTION
+        if (analyzeBtn.dataset.cooldown === "true") return;
+        analyzeBtn.dataset.cooldown = "true";
+        setTimeout(() => { analyzeBtn.dataset.cooldown = "false"; }, 2500);
+
+        if (analyzeBtn.disabled) return;
         track("analyze_click", { plan: getPlan() });
+
         if (!videoInput) return;
+
         // 🔒 HARD LOCK — prevent double requests
         if (analyzeBtn.dataset.running === "true") return;
         analyzeBtn.dataset.running = "true";
+
         // 🛑 CHECK DAILY VIDEO LIMITS
         const plan = getPlan();
         const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
@@ -868,21 +860,31 @@ if (analyzeBtn) {
         if (videosUsed >= limits.videos) {
             showToast(`⚠️ Daily limit reached (${limits.videos} videos). Upgrade for more!`, "error");
             document.querySelector('[data-page="subscription"]')?.click();
+
+            // ✅ FIX 3: Unlock button if limit reached
+            analyzeBtn.dataset.running = "false";
             return;
         }
 
-        const url = videoInput.value.trim();
-        if (!url || !/youtube\.com|youtu\.be/.test(url)) {
+        const url = videoInput.value.trim().replace(/<|>|script/gi, "");
+        if (!url || !/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//.test(url)) {
             showToast("❌ Invalid YouTube URL", "error");
+            analyzeBtn.dataset.running = "false"; // Unlock on error
             return;
         }
 
+        // ✅ 1️⃣ SAVE "CONTINUE WATCHING" URL
+        localStorage.setItem("last_video", url);
+
+        // ✅ FIX 2: DUPLICATE CODE REMOVED (Only one loading state)
         analyzeBtn.disabled = true;
-        analyzeBtn.innerText = "Starting AI engine…";
+        analyzeBtn.innerText = "Analyzing video… please wait";
         analyzeBtn.classList.add("loading");
+
         try {
             const data = await fetchAISummary(url);
             console.log("RAW_ANALYZE_RESPONSE", data);
+
             if (!data) {
                 showToast("❌ No response from AI server.", "error");
                 return;
@@ -892,39 +894,62 @@ if (analyzeBtn) {
                 showToast("⚠️ AI response incomplete. Try again.", "error");
                 return;
             }
+
+            // ✅ FIX 1: SYNTAX CRASH FIXED (Move localStorage OUT of object)
+            localStorage.setItem("last_quiz", JSON.stringify(data.quiz));
+
             window.currentQuizData = {
                 quizData: data.quiz || [],
                 quizIndex: 0,
                 score: 0
             };
 
-            renderCurrentQuestion(); // ✅ CALL AFTER SETTING QUIZ DATA
+            // Check if we need to restore (Optional logic you had)
+            const lastQuiz = localStorage.getItem("last_quiz");
+            if (lastQuiz) {
+                // If you want to use fresh data, prefer data.quiz, otherwise use this logic
+                // But since we just saved it, this logic is redundant, but harmless.
+            }
+
+            renderCurrentQuestion();
 
             currentTranscript = data.transcript || "";
-            localStorage.setItem(
-                "videos_used_today",
-                videosUsed + 1
-            );
+            localStorage.setItem("videos_used_today", videosUsed + 1);
 
             renderSummary(data.summary);
+            suggestNextTopic(data.summary);
+
+            document.getElementById("latestSummary")?.scrollIntoView({ behavior: "smooth" });
+
             renderNotesFromAPI(data.notes, data.quiz);
-            currentTranscript = data.transcript || "";
+            localStorage.setItem("last_ai_result", JSON.stringify(data));
+            window.lastAIData = data;
+            window.lastSummary = data.summary;
+
+            // ✅ STUDY TRACKER (Added from previous request)
+            track("study_complete", {
+                plan: getPlan(),
+                time: new Date().toISOString()
+            });
+
             applyStreakAfterStudy();
+
             saveToHistory({
                 date: new Date().toLocaleString(),
                 summary: data.summary,
                 notes: data.notes,
                 quiz: data.quiz
             });
+
         } catch (err) {
+            console.error(err);
             showToast("❌ Analysis failed. Try again.", "error");
         } finally {
-            analyzeBtn.dataset.running = "false"; // 🔓 release lock
+            analyzeBtn.dataset.running = "false"; // 🔓 Release lock
             analyzeBtn.disabled = false;
             analyzeBtn.innerText = "Analyze Video";
             analyzeBtn.classList.remove("loading");
         }
-
     });
 }
 // 4. Show the CC Button (Un-hide it)
@@ -982,7 +1007,9 @@ function applyStreakAfterStudy() {
         setPlan("student");
         streak.rewarded = true;
         localStorage.setItem("tempStudentExpiry", Date.now() + 24 * 60 * 60 * 1000);
-        showToast("🎉 Student Plan unlocked for 24 hours!", "success");
+
+        showToast("🎉 You unlocked Student Plan for 24 hours!", "success");
+
         updatePlanUI();
     }
 
@@ -1224,7 +1251,7 @@ updatePlanUI();
 updateCCUI();
 updateLoginUI();
 updateStreakUI();
-
+checkTempPlanExpiry();
 // 4. Regional Pricing
 applyRegionalPricing();
 
@@ -1236,6 +1263,11 @@ if (lastDate !== today) {
     localStorage.setItem("last_usage_date", today);
     localStorage.setItem(CC_USED_KEY, 0);
     localStorage.setItem("videos_used_today", 0); // ✅ Reset Video Limit
+}
+// ✅ AUTO-FILL LAST VIDEO
+const lastVideo = localStorage.getItem("last_video");
+if (lastVideo && videoInput) {
+    videoInput.value = lastVideo;
 }
 // 6. Check Backend Status
 fetch(`${BACKEND_BASE}/health`)
@@ -1273,3 +1305,26 @@ window.closeCompareModal = () => {
         }, 300);
     }
 };
+const last = localStorage.getItem("last_ai_result");
+if (last) {
+    const d = JSON.parse(last);
+    renderSummary(d.summary);
+    renderNotesFromAPI(d.notes, d.quiz);
+    currentTranscript = d.transcript;
+}
+function suggestNextTopic(summary) {
+    const box = document.getElementById("nextTopicBox");
+    if (!box) return;
+
+    const words = summary.split(" ").slice(0, 6).join(" ");
+
+    box.innerHTML = `
+        <div style="margin-top:15px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;">
+            <b>📈 Continue Learning</b><br>
+            <a target="_blank"
+               href="https://www.youtube.com/results?search_query=${encodeURIComponent(words)} tutorial">
+               Watch next topic: ${words}
+            </a>
+        </div>
+    `;
+}
